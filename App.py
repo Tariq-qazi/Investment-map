@@ -19,12 +19,15 @@ smart_groups = smart_groups.merge(pattern_matrix[['PatternID', 'Bucket']], left_
 
 # --- Define bucket-to-color mapping ---
 bucket_colors = {
-    "Strong Buy": "darkgreen",
-    "Buy": "green",
-    "Watch": "yellow",
-    "Hold": "orange",
-    "Caution": "red",
-    "Avoid": "darkred"
+    bucket_colors = {
+    "🟢 Strong Buy": "darkgreen",
+    "🟡 Cautious Buy / Watch": "yellow",
+    "🟠 Hold / Neutral": "orange",
+    "🔴 Caution / Avoid": "red",
+    "🔁 Rotation Candidate": "blue",
+    "🧭 Strategic Waitlist": "gray"
+}
+
 }
 
 # --- Sidebar Filters ---
