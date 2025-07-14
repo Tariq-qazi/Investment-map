@@ -28,8 +28,6 @@ bucket_colors = {
     "🧭 Strategic Waitlist": "gray"
 }
 
-}
-
 # --- Sidebar Filters ---
 st.sidebar.title("Serdal Map Filters")
 unit_type = st.sidebar.selectbox("Select Unit Type", sorted(smart_groups['type'].unique()))
