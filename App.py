@@ -1,38 +1,43 @@
-import streamlit as st import geopandas as gpd import pandas as pd import folium from streamlit_folium import st_folium from shapely.geometry import mapping
+import streamlit as st 
+import geopandas as gpd 
+import pandas as pd 
+import folium 
+from streamlit_folium import st_folium 
+from shapely.geometry import mapping
 
---- Load Data ---
+#--- Load Data ---
 
 zones = gpd.read_file("dubai_geojson/dubai.geojson") smart_groups = pd.read_csv("batch_tagged_output.csv") pattern_matrix = pd.read_csv("PatternMatrix_with_Buckets.csv")
 
---- Clean and Normalize Names for Matching ---
+#--- Clean and Normalize Names for Matching ---
 
 zones['CNAME_E_clean'] = zones['CNAME_E'].str.upper().str.strip() smart_groups['area_clean'] = smart_groups['area'].str.upper().str.strip()
 
---- Merge pattern matrix into smart groups ---
+#--- Merge pattern matrix into smart groups ---
 
 smart_groups = smart_groups.merge(pattern_matrix[['PatternID', 'Bucket']], left_on='pattern_id', right_on='PatternID', how='left')
 
---- Define bucket-to-color mapping ---
+#--- Define bucket-to-color mapping ---
 
 bucket_colors = { "🟢 Strong Buy": "#007f00", "🟡 Cautious Buy / Watch": "#ffcc00", "🟠 Hold / Neutral": "#ff9900", "🔴 Caution / Avoid": "#cc0000", "🔁 Rotation Candidate": "#999999", "🧭 Strategic Waitlist": "#3366cc" }
 
---- Sidebar Filters ---
+#--- Sidebar Filters ---
 
 st.sidebar.title("Serdal Map Filters") unit_type = st.sidebar.selectbox("Select Unit Type", sorted(smart_groups['type'].unique())) rooms = st.sidebar.selectbox("Select Room Count", sorted(smart_groups['rooms'].unique())) quarter = st.sidebar.selectbox("Select Quarter", sorted(smart_groups['quarter'].unique(), reverse=True)) insight_mode = st.sidebar.radio("View Insights For:", ["Investor", "End User"])
 
---- Filter Smart Groups ---
+#--- Filter Smart Groups ---
 
 filtered = smart_groups[(smart_groups['type'] == unit_type) & (smart_groups['rooms'] == rooms) & (smart_groups['quarter'] == quarter)]
 
---- Merge with GeoJSON using cleaned fields ---
+#--- Merge with GeoJSON using cleaned fields ---
 
 zones_filtered = zones.merge(filtered, left_on='CNAME_E_clean', right_on='area_clean')
 
---- Display fallback if no results ---
+#--- Display fallback if no results ---
 
 if zones_filtered.empty: st.warning("No matching zones found for the selected filters.") st.stop()
 
---- Create Folium Map ---
+#--- Create Folium Map ---
 
 m = folium.Map(location=[25.2048, 55.2708], zoom_start=11)
 
@@ -68,7 +73,7 @@ folium.GeoJson(
     popup=folium.Popup(popup_html, max_width=400)
 ).add_to(m)
 
---- Add Legend ---
+#--- Add Legend ---
 
 legend_html = '''
 
