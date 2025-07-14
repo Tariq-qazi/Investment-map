@@ -3,3 +3,4 @@ pandas
 geopandas
 folium
 streamlit-folium
+shapely>=2.0
