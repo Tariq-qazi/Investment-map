@@ -1,0 +1,35 @@
+import streamlit as st import geopandas as gpd import pandas as pd import folium from streamlit_folium import st_folium from folium.features import GeoJsonPopup
+
+--- Load Data ---
+
+zones = gpd.read_file("dubai_geojson/dubai.geojson") smart_groups = pd.read_csv("batch_tagged_output.csv")
+
+--- Sidebar Filters ---
+
+st.sidebar.title("Serdal Map Filters") unit_type = st.sidebar.selectbox("Select Unit Type", sorted(smart_groups['type'].unique())) rooms = st.sidebar.selectbox("Select Room Count", sorted(smart_groups['rooms'].unique())) quarter = st.sidebar.selectbox("Select Quarter", sorted(smart_groups['quarter'].unique(), reverse=True))
+
+--- Filter Smart Groups ---
+
+filtered = smart_groups[(smart_groups['type'] == unit_type) & (smart_groups['rooms'] == rooms) & (smart_groups['quarter'] == quarter)]
+
+--- Merge with GeoJSON ---
+
+zones_filtered = zones.merge(filtered, left_on='CNAME_E', right_on='area')
+
+--- Assign Color ---
+
+def get_color(advice): if advice == 'Buy': return 'green' elif advice == 'Wait': return 'yellow' elif advice == 'Avoid': return 'red' return 'gray'
+
+zones_filtered['color'] = zones_filtered['Recommendation_Investor'].apply(get_color)
+
+--- Create Folium Map ---
+
+m = folium.Map(location=[25.2048, 55.2708], zoom_start=11)
+
+for _, row in zones_filtered.iterrows(): folium.GeoJson( row['geometry'], style_function=lambda x, color=row['color']: { 'fillColor': color, 'color': 'black', 'weight': 1, 'fillOpacity': 0.6 }, tooltip=folium.Tooltip(row['CNAME_E']), popup=GeoJsonPopup(fields=[], labels=False, html=f""" <b>Area:</b> {row['CNAME_E']}<br> <b>Pattern ID:</b> {row['pattern_id']}<br> <b><u>Investor Insight:</u></b><br>{row['Insight_Investor']}<br> <b><u>Investor Recommendation:</u></b> {row['Recommendation_Investor']}<br><br> <b><u>End User Insight:</u></b><br>{row['Insight_EndUser']}<br> <b><u>End User Recommendation:</u></b> {row['Recommendation_EndUser']}<br> """ ) ).add_to(m)
+
+--- Display Map ---
+
+st.title("Serdal SmartZone Map") st.markdown(f"Quarter: {quarter} | Unit: {unit_type} | Rooms: {rooms}") st_folium(m, width=1200, height=700)
+
+
