@@ -8,10 +8,24 @@ from shapely.geometry import mapping
 # --- Load Data ---
 zones = gpd.read_file("dubai_geojson/dubai.geojson")
 smart_groups = pd.read_csv("batch_tagged_output.csv")
+pattern_matrix = pd.read_csv("PatternMatrix_with_Buckets.csv")
 
 # --- Clean and Normalize Names for Matching ---
 zones['CNAME_E_clean'] = zones['CNAME_E'].str.upper().str.strip()
 smart_groups['area_clean'] = smart_groups['area'].str.upper().str.strip()
+
+# --- Merge pattern matrix into smart groups ---
+smart_groups = smart_groups.merge(pattern_matrix[['PatternID', 'Bucket']], left_on='pattern_id', right_on='PatternID', how='left')
+
+# --- Define bucket-to-color mapping ---
+bucket_colors = {
+    "Strong Buy": "darkgreen",
+    "Buy": "green",
+    "Watch": "yellow",
+    "Hold": "orange",
+    "Caution": "red",
+    "Avoid": "darkred"
+}
 
 # --- Sidebar Filters ---
 st.sidebar.title("Serdal Map Filters")
@@ -28,16 +42,6 @@ filtered = smart_groups[(smart_groups['type'] == unit_type) &
 # --- Merge with GeoJSON using cleaned fields ---
 zones_filtered = zones.merge(filtered, left_on='CNAME_E_clean', right_on='area_clean')
 
-# --- Assign Color Based on Recommendation ---
-def get_color(advice):
-    if advice == 'Buy':
-        return 'green'
-    elif advice == 'Wait':
-        return 'yellow'
-    elif advice == 'Avoid':
-        return 'red'
-    return 'gray'
-
 # --- Create Folium Map ---
 m = folium.Map(location=[25.2048, 55.2708], zoom_start=11)
 
@@ -51,7 +55,8 @@ for _, row in zones_filtered.iterrows():
             "Investor Insight": row['Insight_Investor'],
             "Investor Recommendation": row['Recommendation_Investor'],
             "End User Insight": row['Insight_EndUser'],
-            "End User Recommendation": row['Recommendation_EndUser']
+            "End User Recommendation": row['Recommendation_EndUser'],
+            "Bucket": row['Bucket']
         }
     }
 
@@ -62,7 +67,6 @@ for _, row in zones_filtered.iterrows():
             <b><u>Insight:</u></b><br>{feature['properties']['Investor Insight']}<br>
             <b><u>Recommendation:</u></b> {feature['properties']['Investor Recommendation']}<br>
         """
-        color_source = feature['properties']['Investor Recommendation']
     else:
         popup_html = f"""
             <b>Area:</b> {feature['properties']['CNAME_E']}<br>
@@ -70,14 +74,14 @@ for _, row in zones_filtered.iterrows():
             <b><u>Insight:</u></b><br>{feature['properties']['End User Insight']}<br>
             <b><u>Recommendation:</u></b> {feature['properties']['End User Recommendation']}<br>
         """
-        color_source = feature['properties']['End User Recommendation']
 
-    fill_color = get_color(color_source)
+    color = bucket_colors.get(feature['properties']['Bucket'], 'gray')
+    feature['properties']['Color'] = color
 
     folium.GeoJson(
         data=feature,
-        style_function=lambda x, color=fill_color: {
-            'fillColor': color,
+        style_function=lambda x: {
+            'fillColor': x['properties']['Color'],
             'color': 'black',
             'weight': 1,
             'fillOpacity': 0.6
