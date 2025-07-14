@@ -18,7 +18,7 @@ smart_groups['area_clean'] = smart_groups['area'].str.upper().str.strip()
 smart_groups = smart_groups.merge(pattern_matrix[['PatternID', 'Bucket']], left_on='pattern_id', right_on='PatternID', how='left')
 
 # --- Define bucket-to-color mapping ---
-bucket_colors = {
+
     bucket_colors = {
     "🟢 Strong Buy": "darkgreen",
     "🟡 Cautious Buy / Watch": "yellow",
