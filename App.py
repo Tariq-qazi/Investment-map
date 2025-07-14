@@ -13,7 +13,8 @@ pattern_matrix = pd.read_csv("PatternMatrix_with_Buckets.csv")
 
 #--- Clean and Normalize Names for Matching ---
 
-zones['CNAME_E_clean'] = zones['CNAME_E'].str.upper().str.strip() smart_groups['area_clean'] = smart_groups['area'].str.upper().str.strip()
+zones['CNAME_E_clean'] = zones['CNAME_E'].str.upper().str.strip()
+smart_groups['area_clean'] = smart_groups['area'].str.upper().str.strip()
 
 #--- Merge pattern matrix into smart groups ---
 
