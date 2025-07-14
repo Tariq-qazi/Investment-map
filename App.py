@@ -7,7 +7,9 @@ from shapely.geometry import mapping
 
 #--- Load Data ---
 
-zones = gpd.read_file("dubai_geojson/dubai.geojson") smart_groups = pd.read_csv("batch_tagged_output.csv") pattern_matrix = pd.read_csv("PatternMatrix_with_Buckets.csv")
+zones = gpd.read_file("dubai_geojson/dubai.geojson") 
+smart_groups = pd.read_csv("batch_tagged_output.csv") 
+pattern_matrix = pd.read_csv("PatternMatrix_with_Buckets.csv")
 
 #--- Clean and Normalize Names for Matching ---
 
