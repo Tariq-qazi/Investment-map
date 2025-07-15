@@ -49,18 +49,25 @@ filtered = smart_groups[
     (smart_groups['quarter'] == quarter)
 ]
 
-# --- Merge with GeoJSON using cleaned fields ---
-zones = zones.merge(filtered, left_on='CNAME_E_clean', right_on='area_clean', how='left')
+# --- Merge GeoJSON geometry into filtered ---
+zones_lookup = zones[['CNAME_E_clean', 'geometry']].drop_duplicates()
+filtered_with_geo = filtered.merge(zones_lookup, left_on='area_clean', right_on='CNAME_E_clean', how='left')
+
+# --- Diagnostic Warning ---
+missing_geo = filtered_with_geo[filtered_with_geo['geometry'].isnull()]['area'].unique()
+if len(missing_geo) > 0:
+    st.warning(f"{len(missing_geo)} zones in your data could not be mapped to the GeoJSON file:")
+    st.write(missing_geo)
 
 # --- Create Folium Map ---
 m = folium.Map(location=[25.2048, 55.2708], zoom_start=11)
 
-for _, row in zones.iterrows():
+for _, row in filtered_with_geo.dropna(subset=['geometry']).iterrows():
     feature = {
         "type": "Feature",
         "geometry": mapping(row['geometry']),
         "properties": {
-            "CNAME_E": row['CNAME_E'],
+            "CNAME_E": row['area'],
             "Pattern ID": row.get('pattern_id', 'N/A'),
             "Investor Insight": row.get('Insight_Investor', 'No data'),
             "Investor Recommendation": row.get('Recommendation_Investor', 'No data'),
@@ -70,17 +77,17 @@ for _, row in zones.iterrows():
         }
     }
 
+    popup_html = f"""
+        <b>Area:</b> {feature['properties']['CNAME_E']}<br>
+        <b>Pattern ID:</b> {feature['properties']['Pattern ID']}<br>
+    """
     if insight_mode == "Investor":
-        popup_html = f"""
-            <b>Area:</b> {feature['properties']['CNAME_E']}<br>
-            <b>Pattern ID:</b> {feature['properties']['Pattern ID']}<br>
+        popup_html += f"""
             <b><u>Insight:</u></b><br>{feature['properties']['Investor Insight']}<br>
             <b><u>Recommendation:</u></b> {feature['properties']['Investor Recommendation']}<br>
         """
     else:
-        popup_html = f"""
-            <b>Area:</b> {feature['properties']['CNAME_E']}<br>
-            <b>Pattern ID:</b> {feature['properties']['Pattern ID']}<br>
+        popup_html += f"""
             <b><u>Insight:</u></b><br>{feature['properties']['End User Insight']}<br>
             <b><u>Recommendation:</u></b> {feature['properties']['End User Recommendation']}<br>
         """
