@@ -33,7 +33,7 @@ bucket_colors = {
 }
 
 # --- Sidebar Filters ---
-st.sidebar.title("Serdal Map Filters")
+st.sidebar.title("Smart Invetment Map Filters")
 unit_type = st.sidebar.selectbox("Select Unit Type", sorted(smart_groups['type'].unique()))
 rooms = st.sidebar.selectbox("Select Room Count", sorted(smart_groups['rooms'].unique()))
 quarter = st.sidebar.selectbox("Select Quarter", sorted(smart_groups['quarter'].unique(), reverse=True))
@@ -117,6 +117,6 @@ legend_html = '''
 m.get_root().html.add_child(folium.Element(legend_html))
 
 # --- Display Map ---
-st.title("Serdal SmartZone Map")
+st.title("Smart Investment Zone Map")
 st.markdown(f"**Quarter:** {quarter} | **Unit:** {unit_type} | **Rooms:** {rooms} | **Mode:** {insight_mode}")
 st_folium(m, width=1200, height=700)
