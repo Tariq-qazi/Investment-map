@@ -30,9 +30,19 @@ def normalize_name(name):
     name = name.replace("SOUTH ", "S ")
     return name.strip()
 
+# Normalize zone names in both files
 zones['CNAME_E_clean'] = zones['CNAME_E'].apply(normalize_name)
 smart_groups['area_clean'] = smart_groups['area'].apply(normalize_name)
-smart_groups['CNAME_E_clean'] = smart_groups['area_clean'].map(zone_map)
+
+# Start with normalized area as default
+smart_groups['CNAME_E_clean'] = smart_groups['area_clean']
+
+# If it exists in the zone_map, override it
+smart_groups['CNAME_E_clean'] = smart_groups.apply(
+    lambda row: zone_map.get(row['area_clean'], row['CNAME_E_clean']),
+    axis=1
+)
+
 
 # --- Merge pattern matrix into smart groups ---
 smart_groups = smart_groups.merge(
