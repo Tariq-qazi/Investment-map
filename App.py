@@ -20,9 +20,15 @@ zone_map = dict(zip(
 
 # --- Clean and Normalize Names for Matching ---
 
-# Use trusted mapping directly without normalization
+# Clean both before mapping
+smart_groups['area_clean'] = smart_groups['area'].str.upper().str.strip()
+zone_map = dict(zip(
+    zone_map_df['Official_DLD_Name_Match'].str.upper().str.strip(),
+    zone_map_df['GeoJSON_Zone_Name'].str.upper().str.strip()
+))
+smart_groups['CNAME_E_clean'] = smart_groups['area_clean'].map(zone_map)
+
 zones['CNAME_E_clean'] = zones['CNAME_E'].str.upper().str.strip()
-smart_groups['CNAME_E_clean'] = smart_groups['area'].map(zone_map).str.upper().str.strip()
 
 # --- Merge pattern matrix into smart groups ---
 smart_groups = smart_groups.merge(
