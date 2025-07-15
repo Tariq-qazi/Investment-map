@@ -9,10 +9,12 @@ from shapely.geometry import mapping
 zones = gpd.read_file("dubai_geojson/dubai.geojson")
 smart_groups = pd.read_csv("batch_tagged_output.csv")
 pattern_matrix = pd.read_csv("PatternMatrix_with_Buckets.csv")
+abbr_map = pd.read_csv("zone_abbreviation_mapping_FINAL.csv", index_col=0).to_dict()["GeoJSON Zone Name"]
 
 # --- Clean and Normalize Names for Matching ---
 zones['CNAME_E_clean'] = zones['CNAME_E'].str.upper().str.strip()
 smart_groups['area_clean'] = smart_groups['area'].str.upper().str.strip()
+smart_groups['area_clean'] = smart_groups['area_clean'].replace(abbr_map)
 
 # --- Merge pattern matrix into smart groups ---
 smart_groups = smart_groups.merge(
@@ -29,11 +31,12 @@ bucket_colors = {
     "🟠 Hold / Neutral": "#ff9900",
     "🔴 Caution / Avoid": "#cc0000",
     "🔁 Rotation Candidate": "#999999",
-    "🧭 Strategic Waitlist": "#3366cc"
+    "🧭 Strategic Waitlist": "#3366cc",
+    "No Data": "#d3d3d3"
 }
 
 # --- Sidebar Filters ---
-st.sidebar.title("Smart Invetment Map Filters")
+st.sidebar.title("Smart Investment Map Filters")
 unit_type = st.sidebar.selectbox("Select Unit Type", sorted(smart_groups['type'].unique()))
 rooms = st.sidebar.selectbox("Select Room Count", sorted(smart_groups['rooms'].unique()))
 quarter = st.sidebar.selectbox("Select Quarter", sorted(smart_groups['quarter'].unique(), reverse=True))
@@ -47,28 +50,23 @@ filtered = smart_groups[
 ]
 
 # --- Merge with GeoJSON using cleaned fields ---
-zones_filtered = zones.merge(filtered, left_on='CNAME_E_clean', right_on='area_clean')
-
-# --- Display fallback if no results ---
-if zones_filtered.empty:
-    st.warning("No matching zones found for the selected filters.")
-    st.stop()
+zones = zones.merge(filtered, left_on='CNAME_E_clean', right_on='area_clean', how='left')
 
 # --- Create Folium Map ---
 m = folium.Map(location=[25.2048, 55.2708], zoom_start=11)
 
-for _, row in zones_filtered.iterrows():
+for _, row in zones.iterrows():
     feature = {
         "type": "Feature",
         "geometry": mapping(row['geometry']),
         "properties": {
             "CNAME_E": row['CNAME_E'],
-            "Pattern ID": row['pattern_id'],
-            "Investor Insight": row['Insight_Investor'],
-            "Investor Recommendation": row['Recommendation_Investor'],
-            "End User Insight": row['Insight_EndUser'],
-            "End User Recommendation": row['Recommendation_EndUser'],
-            "Bucket": row['Bucket']
+            "Pattern ID": row.get('pattern_id', 'N/A'),
+            "Investor Insight": row.get('Insight_Investor', 'No data'),
+            "Investor Recommendation": row.get('Recommendation_Investor', 'No data'),
+            "End User Insight": row.get('Insight_EndUser', 'No data'),
+            "End User Recommendation": row.get('Recommendation_EndUser', 'No data'),
+            "Bucket": row.get('Bucket', 'No Data')
         }
     }
 
@@ -87,7 +85,7 @@ for _, row in zones_filtered.iterrows():
             <b><u>Recommendation:</u></b> {feature['properties']['End User Recommendation']}<br>
         """
 
-    color = bucket_colors.get(feature['properties']['Bucket'], 'gray')
+    color = bucket_colors.get(feature['properties']['Bucket'], '#d3d3d3')
     feature['properties']['Color'] = color
 
     folium.GeoJson(
@@ -112,6 +110,7 @@ legend_html = '''
  <i style="background: #cc0000; width: 12px; height: 12px; float: left; margin-right: 5px;"></i> 🔴 Caution / Avoid<br>
  <i style="background: #999999; width: 12px; height: 12px; float: left; margin-right: 5px;"></i> 🔁 Rotation Candidate<br>
  <i style="background: #3366cc; width: 12px; height: 12px; float: left; margin-right: 5px;"></i> 🧭 Strategic Waitlist<br>
+ <i style="background: #d3d3d3; width: 12px; height: 12px; float: left; margin-right: 5px;"></i> No Data<br>
  </div>
 '''
 m.get_root().html.add_child(folium.Element(legend_html))
