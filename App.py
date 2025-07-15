@@ -32,7 +32,7 @@ def normalize_name(name):
 
 zones['CNAME_E_clean'] = zones['CNAME_E'].apply(normalize_name)
 smart_groups['area_clean'] = smart_groups['area'].apply(normalize_name)
-smart_groups['area_clean'] = smart_groups['area_clean'].replace(abbr_map)
+smart_groups['CNAME_E_clean'] = smart_groups['area_clean'].map(zone_map)
 
 # --- Merge pattern matrix into smart groups ---
 smart_groups = smart_groups.merge(
