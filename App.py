@@ -4,6 +4,7 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 from shapely.geometry import mapping
+import re
 
 # --- Load Data ---
 zones = gpd.read_file("dubai_geojson/dubai.geojson")
@@ -12,8 +13,19 @@ pattern_matrix = pd.read_csv("PatternMatrix_with_Buckets.csv")
 abbr_map = pd.read_csv("zone_abbreviation_mapping_FINAL.csv", index_col=0).to_dict()["GeoJSON Zone Name"]
 
 # --- Clean and Normalize Names for Matching ---
-zones['CNAME_E_clean'] = zones['CNAME_E'].str.upper().str.strip()
-smart_groups['area_clean'] = smart_groups['area'].str.upper().str.strip()
+def normalize_name(name):
+    name = str(name).upper().strip()
+    name = re.sub(r"\bFIRST\b", "1", name)
+    name = re.sub(r"\bSECOND\b", "2", name)
+    name = re.sub(r"\bTHIRD\b", "3", name)
+    name = re.sub(r"\bFOURTH\b", "4", name)
+    name = re.sub(r"\bFIFTH\b", "5", name)
+    name = name.replace("AL ", "")
+    name = name.replace("SOUTH ", "S ")
+    return name.strip()
+
+zones['CNAME_E_clean'] = zones['CNAME_E'].apply(normalize_name)
+smart_groups['area_clean'] = smart_groups['area'].apply(normalize_name)
 smart_groups['area_clean'] = smart_groups['area_clean'].replace(abbr_map)
 
 # --- Merge pattern matrix into smart groups ---
@@ -57,7 +69,7 @@ filtered_with_geo = filtered.merge(zones_lookup, left_on='area_clean', right_on=
 missing_geo = filtered_with_geo[filtered_with_geo['geometry'].isnull()]['area'].unique()
 if len(missing_geo) > 0:
     st.warning(f"{len(missing_geo)} zones in your data could not be mapped to the GeoJSON file:")
-    st.write(missing_geo)
+    st.dataframe(pd.DataFrame(missing_geo, columns=['Unmatched Area']))
 
 # --- Create Folium Map ---
 m = folium.Map(location=[25.2048, 55.2708], zoom_start=11)
