@@ -19,28 +19,10 @@ zone_map = dict(zip(
 ))
 
 # --- Clean and Normalize Names for Matching ---
-def normalize_name(name):
-    name = str(name).upper().strip()
-    name = re.sub(r"\\bFIRST\\b", "1", name)
-    name = re.sub(r"\\bSECOND\\b", "2", name)
-    name = re.sub(r"\\bTHIRD\\b", "3", name)
-    name = re.sub(r"\\bFOURTH\\b", "4", name)
-    name = re.sub(r"\\bFIFTH\\b", "5", name)
-    name = name.replace("AL ", "")
-    name = name.replace("SOUTH ", "S ")
-    return name.strip()
 
-zones['CNAME_E_clean'] = zones['CNAME_E'].apply(normalize_name)
-smart_groups['area_clean'] = smart_groups['area'].apply(normalize_name)
-
-# Start with default normalized name
-smart_groups['CNAME_E_clean'] = smart_groups['area_clean']
-
-# Override only if there's a known match
-smart_groups['CNAME_E_clean'] = smart_groups.apply(
-    lambda row: zone_map.get(row['area_clean'], row['CNAME_E_clean']),
-    axis=1
-)
+# Use trusted mapping directly without normalization
+zones['CNAME_E_clean'] = zones['CNAME_E'].str.upper().str.strip()
+smart_groups['CNAME_E_clean'] = smart_groups['area'].map(zone_map).str.upper().str.strip()
 
 # --- Merge pattern matrix into smart groups ---
 smart_groups = smart_groups.merge(
