@@ -61,31 +61,28 @@ filtered = smart_groups[
     (smart_groups['quarter'] == quarter)
 ]
 
-# --- Merge GeoJSON geometry into filtered ---
-zones_lookup = zones[['CNAME_E_clean', 'geometry']].drop_duplicates()
-filtered_with_geo = filtered.merge(zones_lookup, left_on='area_clean', right_on='CNAME_E_clean', how='left')
-
-# --- Diagnostic Warning ---
-missing_geo = filtered_with_geo[filtered_with_geo['geometry'].isnull()]['area'].unique()
-if len(missing_geo) > 0:
-    st.warning(f"{len(missing_geo)} zones in your data could not be mapped to the GeoJSON file:")
-    st.dataframe(pd.DataFrame(missing_geo, columns=['Unmatched Area']))
+# --- Merge filtered info into ALL zones ---
+zones = zones.merge(
+    filtered[['area_clean', 'pattern_id', 'Insight_Investor', 'Recommendation_Investor',
+              'Insight_EndUser', 'Recommendation_EndUser', 'Bucket']],
+    left_on='CNAME_E_clean', right_on='area_clean', how='left'
+)
 
 # --- Create Folium Map ---
 m = folium.Map(location=[25.2048, 55.2708], zoom_start=11)
 
-for _, row in filtered_with_geo.dropna(subset=['geometry']).iterrows():
+for _, row in zones.iterrows():
     feature = {
         "type": "Feature",
         "geometry": mapping(row['geometry']),
         "properties": {
-            "CNAME_E": row['area'],
+            "CNAME_E": row['CNAME_E'],
             "Pattern ID": row.get('pattern_id', 'N/A'),
             "Investor Insight": row.get('Insight_Investor', 'No data'),
             "Investor Recommendation": row.get('Recommendation_Investor', 'No data'),
             "End User Insight": row.get('Insight_EndUser', 'No data'),
             "End User Recommendation": row.get('Recommendation_EndUser', 'No data'),
-            "Bucket": row.get('Bucket', 'No Data')
+            "Bucket": row.get('Bucket', 'No Data') or 'No Data'
         }
     }
 
