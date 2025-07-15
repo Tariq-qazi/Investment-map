@@ -69,10 +69,12 @@ filtered = smart_groups[
 
 # --- Merge filtered info into ALL zones ---
 zones = zones.merge(
-    filtered[['area_clean', 'pattern_id', 'Insight_Investor', 'Recommendation_Investor',
+    filtered[['CNAME_E_clean', 'pattern_id', 'Insight_Investor', 'Recommendation_Investor',
               'Insight_EndUser', 'Recommendation_EndUser', 'Bucket']],
-    left_on='CNAME_E_clean', right_on='area_clean', how='left'
+    on='CNAME_E_clean',
+    how='left'
 )
+
 
 # --- Create Folium Map ---
 m = folium.Map(location=[25.2048, 55.2708], zoom_start=11)
