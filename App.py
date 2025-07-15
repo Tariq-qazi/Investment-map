@@ -10,7 +10,7 @@ import re
 zones = gpd.read_file("dubai_geojson/dubai.geojson")
 smart_groups = pd.read_csv("batch_tagged_output.csv")
 pattern_matrix = pd.read_csv("PatternMatrix_with_Buckets.csv")
-abbr_map = pd.read_csv("zone_abbreviation_mapping_FINAL.csv", index_col=0).to_dict()["GeoJSON Zone Name"]
+abbr_map = pd.read_csv("zone_abbreviation_mapping_FINAL_UPDATED.csv", index_col=0).to_dict()["GeoJSON Zone Name"].to_dict()["GeoJSON Zone Name"]
 
 # --- Clean and Normalize Names for Matching ---
 def normalize_name(name):
