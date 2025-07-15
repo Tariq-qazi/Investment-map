@@ -136,4 +136,4 @@ m.get_root().html.add_child(folium.Element(legend_html))
 # --- Display Map ---
 st.title("Smart Investment Zone Map")
 st.markdown(f"**Quarter:** {quarter} | **Unit:** {unit_type} | **Rooms:** {rooms} | **Mode:** {insight_mode}")
-st_folium(m, width=1200, height=700)
+st_folium(m, width=1200, height=700, returned_objects=[], key="static_map")
