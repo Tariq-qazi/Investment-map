@@ -10,11 +10,14 @@ import re
 zones = gpd.read_file("dubai_geojson/dubai.geojson")
 smart_groups = pd.read_csv("batch_tagged_output.csv")
 pattern_matrix = pd.read_csv("PatternMatrix_with_Buckets.csv")
-abbr_df = pd.read_csv("zone_abbreviation_mapping_FINAL_UPDATED.csv")
-abbr_map = dict(zip(
-    abbr_df['Abbreviation'].astype(str).str.upper().str.strip(),
-    abbr_df['GeoJSON Zone Name'].astype(str).str.upper().str.strip()
+zone_map_df = pd.read_csv("GeoJSON_DLD_Mapped_Final_Auto (2).csv")
+
+# Build direct mapping from DLD name to GeoJSON name
+zone_map = dict(zip(
+    zone_map_df['Official_DLD_Name_Match'].astype(str).str.upper().str.strip(),
+    zone_map_df['GeoJSON_Zone_Name'].astype(str).str.upper().str.strip()
 ))
+
 # --- Clean and Normalize Names for Matching ---
 def normalize_name(name):
     name = str(name).upper().strip()
